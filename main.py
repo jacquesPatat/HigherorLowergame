@@ -1,75 +1,63 @@
-from random import randint
-from art import logo
+# main.py
 
-EASY_LEVEL_TURNS = 10
-HARD_LEVEL_TURNS = 5
-
-
-def check_answer(user_guess, actual_answer, turns):
-    """Compares guess to the actual answer and returns updated turns."""
-    if user_guess > actual_answer:
-        print("Too high.")
-        return turns - 1
-    elif user_guess < actual_answer:
-        print("Too low.")
-        return turns - 1
-    else:
-        print(f"You got it! The answer was {actual_answer}.")
-        return turns
+from art import logo, vs
+from game_data import data
+import random
+import os
 
 
-def set_difficulty():
-    """Prompts the user to choose a difficulty and returns attempts based on it."""
-    while True:
-        level = input("Choose a difficulty. Type 'easy' or 'hard': ").lower()
-        if level == "easy":
-            return EASY_LEVEL_TURNS
-        elif level == "hard":
-            return HARD_LEVEL_TURNS
-        else:
-            print("Invalid input. Please type 'easy' or 'hard'.")
+def format_account(account):
+    """Format account data for display."""
+    name = account["name"]
+    description = account["description"]
+    country = account["country"]
+    return f"{name}, a {description}, from {country}"
 
 
-def get_valid_guess():
-    """Prompts the user for a valid integer guess."""
-    while True:
-        try:
-            return int(input("Make a guess: "))
-        except ValueError:
-            print("Invalid input. Please enter a number.")
+def is_guess_correct(guess, a_followers, b_followers):
+    """Return True if the guess is correct, otherwise False."""
+    return (a_followers > b_followers and guess == "a") or \
+           (b_followers > a_followers and guess == "b")
+
+
+def clear_screen():
+    """Clears the terminal screen."""
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 
 def play_game():
     print(logo)
-    print("Welcome to the Number Guessing Game!")
-    print("I'm thinking of a number between 1 and 100.")
+    score = 0
+    game_continues = True
 
-    answer = randint(1, 100)
-    # Uncomment for debugging:
-    # print(f"[DEBUG] The correct answer is {answer}")
+    account_b = random.choice(data)
 
-    turns = set_difficulty()
-    guess = None
+    while game_continues:
+        account_a = account_b
+        account_b = random.choice(data)
 
-    while guess != answer and turns > 0:
-        print(f"\nYou have {turns} attempt(s) remaining.")
-        guess = get_valid_guess()
-        turns = check_answer(guess, answer, turns)
+        # Ensure unique accounts
+        while account_b == account_a:
+            account_b = random.choice(data)
 
-        if guess != answer and turns > 0:
-            print("Guess again.")
+        print(f"Compare A: {format_account(account_a)}")
+        print(vs)
+        print(f"Against B: {format_account(account_b)}")
 
-    if guess != answer:
-        print(f"You've run out of guesses. The correct answer was {answer}. You lose.")
+        guess = input("Who has more followers? Type 'A' or 'B': ").lower()
+        clear_screen()
+        print(logo)
+
+        a_followers = account_a["follower_count"]
+        b_followers = account_b["follower_count"]
+
+        if is_guess_correct(guess, a_followers, b_followers):
+            score += 1
+            print(f"✅ You're right! Current score: {score}\n")
+        else:
+            print(f"❌ Sorry, that's wrong. Final score: {score}")
+            game_continues = False
 
 
-def main():
-    while True:
-        play_game()
-        replay = input("\nWould you like to play again? (yes/no): ").lower()
-        if replay not in ["yes", "y"]:
-            print("Thanks for playing! Goodbye.")
-            break
-
-
-main()
+if __name__ == "__main__":
+    play_game()
